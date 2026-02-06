@@ -1,0 +1,103 @@
+╔══════════════════════════════════════════════════════════════════════╗
+║                    AutoChatter - Quick Start Guide                   ║
+╚══════════════════════════════════════════════════════════════════════╝
+
+📋 REQUIREMENTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• Python 3.11+
+• YouTube Data API v3 enabled in Google Cloud Console
+• OAuth 2.0 credentials (client_secret.json)
+
+⚡ QUICK SETUP (5 STEPS)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. Install dependencies:
+   pip install -r requirements.txt
+
+2. Download OAuth credentials from Google Cloud Console
+   Save as: client_secret.json
+
+3. Edit config.py:
+   CHANNEL_ID = "UCxxxxxxxxxxxxxxxxxx"  # Your target channel
+   DISCORD_LINK = "https://discord.gg/your-invite"
+
+4. First run (OAuth authentication):
+   python main.py
+   (Browser will open - sign in and grant permissions)
+
+5. Normal operation:
+   python main.py
+   (Bot will poll every 10 minutes)
+
+🎯 WHAT IT DOES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✓ Checks for new videos every 10 minutes
+✓ Waits 30-180 seconds (random) before commenting
+✓ Posts comment using random template (10 available)
+✓ Includes Discord link in 20% of comments (1/5)
+✓ Tracks videos in state.json to avoid duplicates
+✓ Logs all activity to console + autochatter.log
+✓ Handles rate limits automatically with retry/backoff
+
+📁 KEY FILES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+main.py             - Run this to start the bot
+config.py           - Edit this to configure settings
+client_secret.json  - Your OAuth credentials (download from Google)
+state.json          - Auto-generated, tracks processed videos
+autochatter.log     - Auto-generated, contains activity logs
+
+⚙️ CONFIGURATION OPTIONS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+config.py settings:
+
+CHANNEL_ID                  Target YouTube channel to monitor
+POLL_INTERVAL_SECONDS       Check interval (default: 600 = 10 min)
+MIN_COMMENT_DELAY           Minimum delay before comment (default: 30s)
+MAX_COMMENT_DELAY           Maximum delay before comment (default: 180s)
+DISCORD_LINK                Your Discord invite link
+DISCORD_INCLUSION_RATE      How often to include link (default: 0.2 = 20%)
+SHORTS_ONLY                 Only comment on Shorts (default: False)
+MAX_SHORTS_DURATION         Max Shorts length (default: 60s)
+
+🔧 CUSTOMIZATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Edit templates.py to add/change comment templates:
+
+COMMENT_TEMPLATES = [
+    "Great video! Really enjoyed this content. 🎉",
+    # Add your custom templates here
+]
+
+🛑 STOP THE BOT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Press Ctrl+C in the terminal window
+
+🐛 TROUBLESHOOTING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Issue: "Client secrets file not found"
+Fix: Ensure client_secret.json is in the project directory
+
+Issue: "CHANNEL_ID not configured"
+Fix: Set CHANNEL_ID in config.py or environment variable
+
+Issue: "HTTP 403 Forbidden"
+Fix: Verify YouTube Data API v3 is enabled in Google Cloud Console
+
+Issue: Comments not appearing
+Fix: Check autochatter.log for errors, verify channel allows comments
+
+📖 MORE HELP
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+README.md           - Full documentation
+USAGE_EXAMPLES.md   - Detailed examples and scenarios
+autochatter.log     - Check this for runtime errors
+
+⚠️ IMPORTANT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• Keep client_secret.json and token.pickle secure (never commit)
+• Use responsibly and comply with YouTube Terms of Service
+• Monitor bot behavior regularly
+• Don't spam or harass content creators
+• Ensure comments add value to videos
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
