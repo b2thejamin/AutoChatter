@@ -17,24 +17,35 @@ logger = logging.getLogger(__name__)
 
 class YouTubeClient:
     """YouTube API client with OAuth authentication."""
-    
-    def __init__(self):
-        """Initialize the YouTube client."""
+
+    def __init__(self, token_file: Optional[str] = None):
+        """Initialize the YouTube client.
+
+        Args:
+            token_file: Path to the token pickle file. If None, uses config.TOKEN_FILE.
+        """
         self.youtube = None
+        self.token_file = token_file if token_file else config.TOKEN_FILE
         self.authenticate()
     
     def authenticate(self) -> None:
         """Authenticate with YouTube API using OAuth 2.0."""
         credentials = None
-        
+
+        # Create token directory if it doesn't exist
+        token_dir = os.path.dirname(self.token_file)
+        if token_dir and not os.path.exists(token_dir):
+            os.makedirs(token_dir)
+            logger.info(f"Created token directory: {token_dir}")
+
         # Load token from file if it exists
-        if os.path.exists(config.TOKEN_FILE):
+        if os.path.exists(self.token_file):
             try:
-                with open(config.TOKEN_FILE, 'rb') as token:
+                with open(self.token_file, 'rb') as token:
                     credentials = pickle.load(token)
-                logger.info("Loaded credentials from token file")
+                logger.info(f"Loaded credentials from token file: {self.token_file}")
             except Exception as e:
-                logger.error(f"Error loading credentials: {e}")
+                logger.error(f"Error loading credentials from {self.token_file}: {e}")
         
         # If there are no (valid) credentials, let the user log in
         if not credentials or not credentials.valid:
@@ -61,9 +72,9 @@ class YouTubeClient:
                 logger.info("Completed OAuth authentication flow")
             
             # Save the credentials for the next run
-            with open(config.TOKEN_FILE, 'wb') as token:
+            with open(self.token_file, 'wb') as token:
                 pickle.dump(credentials, token)
-                logger.info("Saved credentials to token file")
+                logger.info(f"Saved credentials to token file: {self.token_file}")
         
         self.youtube = build(
             config.YOUTUBE_API_SERVICE_NAME,
@@ -247,15 +258,47 @@ class YouTubeClient:
     
     def is_short(self, video_id: str) -> bool:
         """Check if a video is a Short (duration <= 60 seconds).
-        
+
         Args:
             video_id: YouTube video ID.
-            
+
         Returns:
             True if video is a Short, False otherwise.
         """
         duration = self.get_video_duration(video_id)
         if duration is None:
             return False
-        
+
         return duration <= config.MAX_SHORTS_DURATION
+
+    def get_authenticated_channel_info(self) -> Optional[Dict]:
+        """Get the authenticated channel's information.
+
+        Returns:
+            Dictionary with 'id' and 'title' of authenticated channel, or None if error.
+        """
+        try:
+            response = self.youtube.channels().list(
+                part="id,snippet",
+                mine=True
+            ).execute()
+
+            if not response.get('items'):
+                logger.error("No channel found for authenticated user")
+                return None
+
+            channel = response['items'][0]
+            channel_info = {
+                'id': channel['id'],
+                'title': channel['snippet']['title']
+            }
+
+            logger.info(f"Authenticated as channel: {channel_info['title']} ({channel_info['id']})")
+            return channel_info
+
+        except HttpError as e:
+            logger.error(f"HTTP error fetching authenticated channel info: {e}")
+            return None
+        except Exception as e:
+            logger.error(f"Error fetching authenticated channel info: {e}")
+            return None

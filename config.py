@@ -38,5 +38,18 @@ MAX_BACKOFF = 300  # Maximum backoff in seconds (5 minutes)
 LOG_FILE = "autochatter.log"
 LOG_LEVEL = "INFO"
 
-# Channel settings - Override in environment or here
-CHANNEL_ID = os.getenv("YOUTUBE_CHANNEL_ID", "")  # Target channel to monitor
+# Channel settings - List of channels to monitor
+# Each channel monitors its own uploads and comments as itself
+CHANNELS = [
+    {
+        "name": "Channel A",
+        "channel_id": os.getenv("YOUTUBE_CHANNEL_ID", "UClocYsYZy336jFkJXdPI1DQ"),  # Replace with actual channel ID
+        "token_file": "tokens/channel_a.pickle"
+    },
+    
+     {
+         "name": "Channel B",
+         "channel_id": os.getenv("YOUTUBE_CHANNEL_ID_B", "UCdy4tFtDK0AQVDAX8aKPLiA"),  # Replace with actual channel ID
+         "token_file": "tokens/channel_b.pickle"
+     },
+]

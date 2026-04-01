@@ -12,6 +12,7 @@ AutoChatter is a Python application that automatically posts comments on new You
 - 🔁 **Retry Logic**: Handles 429 (rate limit) and 5xx errors with exponential backoff
 - 💾 **State Management**: JSON-based tracking to avoid duplicate comments
 - 📝 **Comprehensive Logging**: File and console logging with rotation
+- 🎭 **Multi-Channel Support**: Monitor and comment on multiple channels, each using its own identity
 
 ## Requirements
 
@@ -48,12 +49,37 @@ Edit `config.py` to customize the bot behavior:
 ### Essential Settings
 
 ```python
-# Target YouTube channel ID to monitor
-CHANNEL_ID = "UCxxxxxxxxxxxxxxxxxx"  # Replace with actual channel ID
+# Multi-channel configuration (NEW!)
+CHANNELS = [
+    {
+        "name": "My Main Channel",
+        "channel_id": "UCxxxxxxxxxxxxxxxxxxxx",  # Replace with actual channel ID
+        "token_file": "tokens/main_channel.pickle"
+    },
+    # Add more channels as needed
+    # {
+    #     "name": "My Gaming Channel",
+    #     "channel_id": "UCyyyyyyyyyyyyyyyyyyyy",
+    #     "token_file": "tokens/gaming_channel.pickle"
+    # }
+]
 
 # Discord invite link (included in 20% of comments)
 DISCORD_LINK = "https://discord.gg/your-invite-code"
 ```
+
+**For single-channel setups**, configure just one channel:
+```python
+CHANNELS = [
+    {
+        "name": "My Channel",
+        "channel_id": "UCxxxxxxxxxxxxxxxxxx",
+        "token_file": "token.pickle"
+    }
+]
+```
+
+**For multi-channel setups**, see [MULTI_CHANNEL_GUIDE.md](MULTI_CHANNEL_GUIDE.md) for detailed instructions.
 
 ### Optional Settings
 
@@ -102,10 +128,20 @@ On the first run, the application will open a browser window for OAuth authentic
 python main.py
 ```
 
+**For single-channel setup:**
 1. A browser window will open
 2. Sign in with your Google account
 3. Grant the requested permissions
-4. The authentication token will be saved to `token.pickle` for future use
+4. The authentication token will be saved to the specified token file
+
+**For multi-channel setup:**
+1. The app will process each channel sequentially
+2. For each channel without a token file, a browser window will open
+3. Sign in with the appropriate Google account for that channel
+4. Each channel's token is saved to its configured token file
+5. The app verifies that each authenticated account matches the expected channel ID
+
+See [MULTI_CHANNEL_GUIDE.md](MULTI_CHANNEL_GUIDE.md) for detailed multi-channel setup instructions.
 
 ### Normal Operation
 
@@ -116,12 +152,15 @@ python main.py
 ```
 
 The bot will:
-1. Start polling the configured channel every 10 minutes
-2. Detect new video uploads
-3. Wait a random delay (30-180 seconds)
-4. Post a random comment from the template list
-5. Optionally include Discord link (20% chance)
-6. Log all activities to console and `autochatter.log`
+1. Initialize and authenticate each configured channel
+2. Verify authentication matches expected channel IDs
+3. Start polling all channels every 10 minutes
+4. For each channel:
+   - Detect new video uploads
+   - Wait a random delay (30-180 seconds)
+   - Post a random comment from the template list (as that channel)
+   - Optionally include Discord link (20% chance)
+5. Log all activities to console and `autochatter.log`
 
 ### Stopping the Bot
 
@@ -138,29 +177,36 @@ AutoChatter/
 ├── config.py            # Configuration settings
 ├── requirements.txt     # Python dependencies
 ├── README.md           # This file
+├── MULTI_CHANNEL_GUIDE.md  # Multi-channel setup guide
 ├── .gitignore          # Git ignore patterns
 ├── client_secret.json  # OAuth credentials (user-provided, not in repo)
-├── token.pickle        # OAuth token (auto-generated, not in repo)
+├── tokens/             # Directory for channel-specific token files (auto-generated)
+│   ├── channel_a.pickle
+│   └── channel_b.pickle
 ├── state.json          # State tracking file (auto-generated, not in repo)
 └── autochatter.log     # Application log file (auto-generated, not in repo)
 ```
 
 ## How It Works
 
-1. **Initialization**: Loads OAuth credentials and authenticates with YouTube API
-2. **State Loading**: Reads `state.json` to get list of previously seen videos
-3. **Polling Loop**: Every 10 minutes:
-   - Fetches latest 5 uploads from the target channel
-   - Identifies new videos not in the state file
-   - For each new video:
-     - Checks duration if Shorts-only mode is enabled
-     - Waits random delay (30-180 seconds)
-     - Selects random comment template
-     - Decides whether to include Discord link (20% probability)
-     - Posts comment via `CommentThreads.insert` API
-     - Handles rate limits and errors with retry/backoff
-     - Marks video as seen in state file
-4. **Error Handling**: Retries on 429/5xx errors with exponential backoff
+## How It Works
+
+1. **Initialization**: Loads OAuth credentials and authenticates with YouTube API for each configured channel
+2. **Authentication Verification**: Verifies each token matches the expected channel ID
+3. **State Loading**: Reads `state.json` to get list of previously seen videos (tracked per channel)
+4. **Polling Loop**: Every 10 minutes:
+   - For each configured channel:
+     - Fetches latest 5 uploads from that channel
+     - Identifies new videos not in the state file
+     - For each new video:
+       - Checks duration if Shorts-only mode is enabled
+       - Waits random delay (30-180 seconds)
+       - Selects random comment template
+       - Decides whether to include Discord link (20% probability)
+       - Posts comment via `CommentThreads.insert` API using that channel's authentication
+       - Handles rate limits and errors with retry/backoff
+       - Marks video as seen in state file
+5. **Error Handling**: Retries on 429/5xx errors with exponential backoff
 
 ## API Rate Limits
 

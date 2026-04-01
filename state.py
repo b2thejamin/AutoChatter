@@ -52,24 +52,30 @@ class StateManager:
         except Exception as e:
             logger.error(f"Error saving state: {e}")
     
-    def is_video_seen(self, video_id: str) -> bool:
+    def is_video_seen(self, video_id: str, channel_id: Optional[str] = None) -> bool:
         """Check if a video has been seen before.
-        
+
         Args:
             video_id: YouTube video ID.
-            
+            channel_id: YouTube channel ID (optional, for channel-specific tracking).
+
         Returns:
             True if video has been seen, False otherwise.
         """
-        return video_id in self.last_seen_videos
-    
-    def mark_video_seen(self, video_id: str) -> None:
+        # Support both channel-specific and global tracking
+        key = f"{channel_id}:{video_id}" if channel_id else video_id
+        return key in self.last_seen_videos
+
+    def mark_video_seen(self, video_id: str, channel_id: Optional[str] = None) -> None:
         """Mark a video as seen.
-        
+
         Args:
             video_id: YouTube video ID.
+            channel_id: YouTube channel ID (optional, for channel-specific tracking).
         """
-        self.last_seen_videos.add(video_id)
+        # Support both channel-specific and global tracking
+        key = f"{channel_id}:{video_id}" if channel_id else video_id
+        self.last_seen_videos.add(key)
         self.last_check_time = datetime.utcnow().isoformat()
         self.save_state()
     
